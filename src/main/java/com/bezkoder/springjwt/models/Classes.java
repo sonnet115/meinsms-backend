@@ -1,5 +1,6 @@
 package com.bezkoder.springjwt.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -16,6 +17,7 @@ public class Classes {
 
     private String classCode;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "t_id", nullable = false)
     User teacher;

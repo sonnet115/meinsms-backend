@@ -53,11 +53,55 @@ public class ClassesController {
         return ResponseEntity.ok("Classes Created Successfully");
     }
 
-    @GetMapping("get")
-    public ResponseEntity<?> get() {
+    @GetMapping("/get")
+    public ResponseEntity<?> getByUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         User user = userRepository.getById(userDetails.getId());
         return ResponseEntity.ok(user.getClasses());
     }
+
+    @GetMapping("/get/{id}")
+    public ResponseEntity<?> getByClassId(@PathVariable Long id) {
+        Optional<Classes> classes = classesRepository.findById(id);
+        if (classes.isPresent()) {
+            return ResponseEntity.ok(classes.get());
+        }
+        return ResponseEntity.ok("No Class Found");
+    }
+
+    @GetMapping("/get/code/{classCode}")
+    public ResponseEntity<?> getByClassCode(@PathVariable String classCode) {
+        Optional<Classes> classes = classesRepository.findAllByClassCode(classCode);
+        if (classes.isPresent()) {
+            return ResponseEntity.ok(classes.get());
+        }
+        return ResponseEntity.ok("No Class Found");
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ClassesCreateRequest classesCreateRequest) {
+
+        Optional<Classes> classesOptional = classesRepository.findById(id);
+
+        if (classesOptional.isPresent()) {
+            Classes classes = classesOptional.get();
+            classes.setClassName(classesCreateRequest.getName());
+            classesRepository.save(classes);
+            return ResponseEntity.ok("Class Updated Successfully");
+        }
+        return ResponseEntity.ok("No Class Found");
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        Optional<Classes> classesOptional = classesRepository.findById(id);
+        if (classesOptional.isPresent()) {
+            Classes classes = classesOptional.get();
+            classesRepository.delete(classes);
+            return ResponseEntity.ok("Class Deleted Successfully");
+        }
+        return ResponseEntity.ok("No Class Found");
+    }
 }
+

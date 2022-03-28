@@ -3,6 +3,6 @@ package com.bezkoder.springjwt.payload.request;
 import lombok.Data;
 
 @Data
-public class StudentCreateRequest {
+public class RatingCategoryCreateRequest {
     private String name;
 }

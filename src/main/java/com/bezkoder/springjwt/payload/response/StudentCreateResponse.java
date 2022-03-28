@@ -1,8 +1,12 @@
-package com.bezkoder.springjwt.payload.request;
+package com.bezkoder.springjwt.payload.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-public class StudentCreateRequest {
+@AllArgsConstructor
+public class StudentCreateResponse {
+    private String message;
     private String name;
+    private Long id;
 }

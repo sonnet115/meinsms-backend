@@ -1,17 +1,13 @@
 package com.bezkoder.springjwt.payload.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
 public class MessageResponse {
-  private String message;
+    private String message;
+    private int code;
 
-  public MessageResponse(String message) {
-    this.message = message;
-  }
 
-  public String getMessage() {
-    return message;
-  }
-
-  public void setMessage(String message) {
-    this.message = message;
-  }
 }

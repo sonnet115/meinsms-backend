@@ -1,20 +1,25 @@
 package com.bezkoder.springjwt.controllers;
 
 import com.bezkoder.springjwt.models.Classes;
+import com.bezkoder.springjwt.models.Students;
 import com.bezkoder.springjwt.models.User;
 import com.bezkoder.springjwt.payload.request.ClassesCreateRequest;
+import com.bezkoder.springjwt.payload.request.StudentAddToClassRequest;
+import com.bezkoder.springjwt.payload.request.StudentCreateRequest;
+import com.bezkoder.springjwt.payload.response.MessageResponse;
+import com.bezkoder.springjwt.payload.response.StudentCreateResponse;
 import com.bezkoder.springjwt.repository.ClassesRepository;
+import com.bezkoder.springjwt.repository.StudentsRepository;
 import com.bezkoder.springjwt.repository.UserRepository;
 import com.bezkoder.springjwt.security.services.UserDetailsImpl;
+import org.json.HTTP;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -26,6 +31,9 @@ public class ClassesController {
 
     @Autowired
     ClassesRepository classesRepository;
+
+    @Autowired
+    StudentsRepository studentsRepository;
 
     Random rand = new Random();
 
@@ -102,6 +110,23 @@ public class ClassesController {
             return ResponseEntity.ok("Class Deleted Successfully");
         }
         return ResponseEntity.ok("No Class Found");
+    }
+
+    @GetMapping("/get/student/{studentId}")
+    public ResponseEntity<?> getByStudent(@PathVariable Long studentId) {
+        Optional<Students> studentsOptional = studentsRepository.findById(studentId);
+        if (studentsOptional.isPresent()) {
+            Students students = studentsOptional.get();
+            Optional<List<Classes>> classOptional = classesRepository.findAllByStudents(students);
+            if (classOptional.isPresent()) {
+                List<Classes> classesList = classOptional.get();
+                return ResponseEntity.ok(classesList);
+            } else {
+                return ResponseEntity.ok(new MessageResponse("No Class found for that Student", 404));
+            }
+        } else {
+            return ResponseEntity.ok(new MessageResponse("Invalid Student ID", 400));
+        }
     }
 }
 

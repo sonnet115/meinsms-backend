@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Setter
@@ -20,7 +21,7 @@ public class Students {
 
     private String name;
 
-    @Column(columnDefinition="TEXT")
+    @Column(columnDefinition = "TEXT")
     private String avatar;
 
     @JsonIgnore
@@ -34,4 +35,7 @@ public class Students {
     @ManyToOne
     @JoinColumn(name = "parent_id", nullable = false)
     User parent;
+
+    @OneToMany(mappedBy = "students")
+    List<Rating> ratingList;
 }

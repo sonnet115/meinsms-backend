@@ -6,6 +6,7 @@ import com.bezkoder.springjwt.models.User;
 import com.bezkoder.springjwt.payload.request.ClassesCreateRequest;
 import com.bezkoder.springjwt.payload.request.StudentAddToClassRequest;
 import com.bezkoder.springjwt.payload.request.StudentCreateRequest;
+import com.bezkoder.springjwt.payload.response.CommonResponse;
 import com.bezkoder.springjwt.payload.response.MessageResponse;
 import com.bezkoder.springjwt.payload.response.StudentCreateResponse;
 import com.bezkoder.springjwt.repository.ClassesRepository;
@@ -39,26 +40,30 @@ public class ClassesController {
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody ClassesCreateRequest classesCreateRequest) {
-        int classCode = 0;
-        for (; ; ) {
-            classCode = rand.nextInt(100000);
-            Optional<Classes> classExist = classesRepository.findAllByClassCode(String.valueOf(classCode));
-            if (classExist.isPresent()) {
-                continue;
+        try {
+            int classCode = 0;
+            for (; ; ) {
+                classCode = rand.nextInt(100000);
+                Optional<Classes> classExist = classesRepository.findAllByClassCode(String.valueOf(classCode));
+                if (classExist.isPresent()) {
+                    continue;
+                }
+                break;
             }
-            break;
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+            User user = userRepository.getById(userDetails.getId());
+
+            Classes classes = new Classes();
+            classes.setClassName(classesCreateRequest.getName());
+            classes.setTeacher(user);
+            classes.setClassCode(String.valueOf(classCode));
+            classesRepository.save(classes);
+
+            return ResponseEntity.ok(new CommonResponse(true, "class_create_successful", classes));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new CommonResponse(false, "class_create_failed", ""));
         }
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
-        User user = userRepository.getById(userDetails.getId());
-
-        Classes classes = new Classes();
-        classes.setClassName(classesCreateRequest.getName());
-        classes.setTeacher(user);
-        classes.setClassCode(String.valueOf(classCode));
-        classesRepository.save(classes);
-
-        return ResponseEntity.ok("Classes Created Successfully");
     }
 
     @GetMapping("/get")
@@ -66,25 +71,19 @@ public class ClassesController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         User user = userRepository.getById(userDetails.getId());
-        return ResponseEntity.ok(user.getClasses());
+        return ResponseEntity.ok(new CommonResponse(true, "", user.getClasses()));
     }
 
     @GetMapping("/get/{id}")
     public ResponseEntity<?> getByClassId(@PathVariable Long id) {
         Optional<Classes> classes = classesRepository.findById(id);
-        if (classes.isPresent()) {
-            return ResponseEntity.ok(classes.get());
-        }
-        return ResponseEntity.ok("No Class Found");
+        return classes.map(value -> ResponseEntity.ok(new CommonResponse(true, "", value))).orElseGet(() -> ResponseEntity.ok(new CommonResponse(false, "no_class_found", "")));
     }
 
     @GetMapping("/get/code/{classCode}")
     public ResponseEntity<?> getByClassCode(@PathVariable String classCode) {
         Optional<Classes> classes = classesRepository.findAllByClassCode(classCode);
-        if (classes.isPresent()) {
-            return ResponseEntity.ok(classes.get());
-        }
-        return ResponseEntity.ok("No Class Found");
+        return classes.map(value -> ResponseEntity.ok(new CommonResponse(true, "", value))).orElseGet(() -> ResponseEntity.ok(new CommonResponse(false, "no_class_found", "")));
     }
 
     @PutMapping("/update/{id}")
@@ -96,9 +95,9 @@ public class ClassesController {
             Classes classes = classesOptional.get();
             classes.setClassName(classesCreateRequest.getName());
             classesRepository.save(classes);
-            return ResponseEntity.ok("Class Updated Successfully");
+            return ResponseEntity.ok(new CommonResponse(true, "class_updated_success", classes));
         }
-        return ResponseEntity.ok("No Class Found");
+        return ResponseEntity.ok(new CommonResponse(false, "class_updated_failed", ""));
     }
 
     @DeleteMapping("/delete/{id}")
@@ -107,9 +106,9 @@ public class ClassesController {
         if (classesOptional.isPresent()) {
             Classes classes = classesOptional.get();
             classesRepository.delete(classes);
-            return ResponseEntity.ok("Class Deleted Successfully");
+            return ResponseEntity.ok(new CommonResponse(true, "class_deleted_success", classes));
         }
-        return ResponseEntity.ok("No Class Found");
+        return ResponseEntity.ok(new CommonResponse(true, "class_deleted_failed", ""));
     }
 
     @GetMapping("/get/student/{studentId}")
@@ -120,12 +119,12 @@ public class ClassesController {
             Optional<List<Classes>> classOptional = classesRepository.findAllByStudents(students);
             if (classOptional.isPresent()) {
                 List<Classes> classesList = classOptional.get();
-                return ResponseEntity.ok(classesList);
+                return ResponseEntity.ok(new CommonResponse(true, "", classesList));
             } else {
-                return ResponseEntity.ok(new MessageResponse("No Class found for that Student", 404));
+                return ResponseEntity.ok(new CommonResponse(false, "no_class_found_for_student", ""));
             }
         } else {
-            return ResponseEntity.ok(new MessageResponse("Invalid Student ID", 400));
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_student_id", ""));
         }
     }
 }

@@ -6,6 +6,7 @@ import com.bezkoder.springjwt.models.Students;
 import com.bezkoder.springjwt.models.User;
 import com.bezkoder.springjwt.payload.request.ClassesCreateRequest;
 import com.bezkoder.springjwt.payload.request.RatingCategoryCreateRequest;
+import com.bezkoder.springjwt.payload.response.CommonResponse;
 import com.bezkoder.springjwt.payload.response.MessageResponse;
 import com.bezkoder.springjwt.repository.ClassesRepository;
 import com.bezkoder.springjwt.repository.RatingCategoryRepository;
@@ -35,16 +36,20 @@ public class RatingCategoryController {
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody RatingCategoryCreateRequest ratingCategoryCreateRequest) {
-        RatingCategory ratingCategory = new RatingCategory();
-        ratingCategory.setName(ratingCategoryCreateRequest.getName());
+        try {
+            RatingCategory ratingCategory = new RatingCategory();
+            ratingCategory.setName(ratingCategoryCreateRequest.getName());
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
-        User user = userRepository.getById(userDetails.getId());
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+            User user = userRepository.getById(userDetails.getId());
 
-        ratingCategory.setTeacher(user);
-        ratingCategoryRepository.save(ratingCategory);
-        return ResponseEntity.ok(new MessageResponse(ratingCategory.getName() + " is created successfully", 200));
+            ratingCategory.setTeacher(user);
+            ratingCategoryRepository.save(ratingCategory);
+            return ResponseEntity.ok(new CommonResponse(true, "rating_cat_created_successful", ratingCategory));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new CommonResponse(false, "rating_cat_created_failed", ""));
+        }
     }
 
     @GetMapping("/get")
@@ -52,16 +57,13 @@ public class RatingCategoryController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         User user = userRepository.getById(userDetails.getId());
-        return ResponseEntity.ok(user.getRatingCategories());
+        return ResponseEntity.ok(new CommonResponse(true, "", user.getRatingCategories()));
     }
 
     @GetMapping("/get/{id}")
     public ResponseEntity<?> getByClassId(@PathVariable Long id) {
         Optional<RatingCategory> ratingCategoryOptional = ratingCategoryRepository.findById(id);
-        if (ratingCategoryOptional.isPresent()) {
-            return ResponseEntity.ok(ratingCategoryOptional.get());
-        }
-        return ResponseEntity.ok(new MessageResponse("Rating Category ID is invalid", 400));
+        return ratingCategoryOptional.map(ratingCategory -> ResponseEntity.ok(new CommonResponse(true, "", ratingCategory))).orElseGet(() -> ResponseEntity.ok(new CommonResponse(false, "rating_cat_id_invalid", "")));
     }
 
 
@@ -72,9 +74,9 @@ public class RatingCategoryController {
             RatingCategory ratingCategory = ratingCategoryOptional.get();
             ratingCategory.setName(ratingCategoryCreateRequest.getName());
             ratingCategoryRepository.save(ratingCategory);
-            return ResponseEntity.ok(new MessageResponse(ratingCategoryCreateRequest.getName() + " Updated Successfully", 200));
+            return ResponseEntity.ok(new CommonResponse(true, "rating_cat_updated_successful", ""));
         }
-        return ResponseEntity.ok(new MessageResponse("Rating Category ID is Invalid", 400));
+        return ResponseEntity.ok(new CommonResponse(false, "rating_cat_id_invalid", ""));
     }
 
     @DeleteMapping("/delete/{id}")
@@ -83,9 +85,9 @@ public class RatingCategoryController {
         if (ratingCategoryOptional.isPresent()) {
             RatingCategory ratingCategory = ratingCategoryOptional.get();
             ratingCategoryRepository.delete(ratingCategory);
-            return ResponseEntity.ok(new MessageResponse(ratingCategory.getName() + " Deleted Successfully", 200));
+            return ResponseEntity.ok(new CommonResponse(true, "rating_cat_deleted_successful", ""));
         }
-        return ResponseEntity.ok(new MessageResponse("Rating Category ID is Invalid", 400));
+        return ResponseEntity.ok(new CommonResponse(false, "rating_cat_id_invalid", ""));
     }
 }
 

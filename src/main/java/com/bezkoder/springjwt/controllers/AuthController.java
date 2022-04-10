@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import com.bezkoder.springjwt.payload.response.CommonResponse;
 import com.bezkoder.springjwt.payload.response.LoginResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -63,70 +64,74 @@ public class AuthController {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getName(),
-                userDetails.getUsername(),
-                roles
-        ));
+        return ResponseEntity.ok(
+                new CommonResponse(true, "logged_successful", new JwtResponse(jwt,
+                        userDetails.getId(),
+                        userDetails.getName(),
+                        userDetails.getUsername(),
+                        roles)));
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Username is already taken!", 409));
+        try {
+            if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(new CommonResponse(true, "username_taken", ""));
+            }
+
+            User user = new User();
+            user.setName(signUpRequest.getName());
+            user.setUsername(signUpRequest.getUsername());
+            user.setPassword(encoder.encode(signUpRequest.getPassword()));
+            user.setType(signUpRequest.getType());
+            user.setEmail(signUpRequest.getEmail());
+            user.setPhone(signUpRequest.getPhone());
+
+            Set<String> strRoles = signUpRequest.getRole();
+            Set<Role> roles = new HashSet<>();
+
+            if (strRoles == null) {
+                Role userRole = roleRepository.findByName(ERole.ROLE_PARENT)
+                        .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                roles.add(userRole);
+            } else {
+                strRoles.forEach(role -> {
+                    switch (role) {
+                        case "super_admin":
+                            Role adminRole = roleRepository.findByName(ERole.ROLE_SUPER_ADMIN)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(adminRole);
+                            break;
+                        case "admin":
+                            Role modRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(modRole);
+                            break;
+
+                        case "teacher":
+                            Role teacherRole = roleRepository.findByName(ERole.ROLE_TEACHER)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(teacherRole);
+                            break;
+
+                        case "parent":
+                            Role parentRole = roleRepository.findByName(ERole.ROLE_PARENT)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(parentRole);
+                            break;
+                    }
+                });
+            }
+
+            user.setRoles(roles);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(new CommonResponse(true, "regis_successful", ""));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new CommonResponse(false, "regis_unsuccessful", ""));
         }
-
-        User user = new User();
-        user.setName(signUpRequest.getName());
-        user.setUsername(signUpRequest.getUsername());
-        user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setType(signUpRequest.getType());
-        user.setEmail(signUpRequest.getEmail());
-        user.setPhone(signUpRequest.getPhone());
-
-        Set<String> strRoles = signUpRequest.getRole();
-        Set<Role> roles = new HashSet<>();
-
-        if (strRoles == null) {
-            Role userRole = roleRepository.findByName(ERole.ROLE_PARENT)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                switch (role) {
-                    case "super_admin":
-                        Role adminRole = roleRepository.findByName(ERole.ROLE_SUPER_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(adminRole);
-                        break;
-                    case "admin":
-                        Role modRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(modRole);
-                        break;
-
-                    case "teacher":
-                        Role teacherRole = roleRepository.findByName(ERole.ROLE_TEACHER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(teacherRole);
-                        break;
-
-                    case "parent":
-                        Role parentRole = roleRepository.findByName(ERole.ROLE_PARENT)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(parentRole);
-                        break;
-                }
-            });
-        }
-
-        user.setRoles(roles);
-        userRepository.save(user);
-
-        return ResponseEntity.ok(new MessageResponse("User registered successfully!", 200));
     }
 
     @GetMapping("get/all/customers")

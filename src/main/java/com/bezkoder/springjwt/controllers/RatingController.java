@@ -3,6 +3,7 @@ package com.bezkoder.springjwt.controllers;
 import com.bezkoder.springjwt.models.*;
 import com.bezkoder.springjwt.payload.request.RatingCategoryCreateRequest;
 import com.bezkoder.springjwt.payload.request.RatingCreateRequest;
+import com.bezkoder.springjwt.payload.response.CommonResponse;
 import com.bezkoder.springjwt.payload.response.MessageResponse;
 import com.bezkoder.springjwt.repository.*;
 import com.bezkoder.springjwt.security.services.UserDetailsImpl;
@@ -49,9 +50,9 @@ public class RatingController {
             rating.setRatingCategory(ratingCategoryOptional.get());
             rating.setClasses(classesOptional.get());
             ratingRepository.save(rating);
-            return ResponseEntity.ok(new MessageResponse("Rating Submitted Successfully", 200));
+            return ResponseEntity.ok(new CommonResponse(true, "rating_submitted_successful", rating));
         }
-        return ResponseEntity.ok(new MessageResponse("Something went wrong. Try Again !", 400));
+        return ResponseEntity.ok(new CommonResponse(false, "rating_submitted_failed", ""));
     }
 
     @GetMapping("/get/student/{studentId}/classes/{classesId}")
@@ -64,24 +65,14 @@ public class RatingController {
             Optional<List<Rating>> ratingListOptional = ratingRepository.findAllByStudentsAndClasses(students, classes);
             if (ratingListOptional.isPresent()) {
                 List<Rating> ratingList = ratingListOptional.get();
-                return ResponseEntity.ok(ratingList);
+                return ResponseEntity.ok(new CommonResponse(true, "", ratingList));
             } else {
-                return ResponseEntity.ok(new MessageResponse("No Rating found for that Student", 404));
+                return ResponseEntity.ok(new CommonResponse(false, "no_rating_found_for_student", ""));
             }
         } else {
-            return ResponseEntity.ok(new MessageResponse("Invalid Student or Class ID", 400));
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_student_id", ""));
         }
     }
-
-    @GetMapping("/get/{id}")
-    public ResponseEntity<?> getByClassId(@PathVariable Long id) {
-        Optional<RatingCategory> ratingCategoryOptional = ratingCategoryRepository.findById(id);
-        if (ratingCategoryOptional.isPresent()) {
-            return ResponseEntity.ok(ratingCategoryOptional.get());
-        }
-        return ResponseEntity.ok(new MessageResponse("Rating Category ID is invalid", 400));
-    }
-
 
     @PutMapping("/update/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody RatingCategoryCreateRequest ratingCategoryCreateRequest) {
@@ -90,9 +81,9 @@ public class RatingController {
             RatingCategory ratingCategory = ratingCategoryOptional.get();
             ratingCategory.setName(ratingCategoryCreateRequest.getName());
             ratingCategoryRepository.save(ratingCategory);
-            return ResponseEntity.ok(new MessageResponse(ratingCategoryCreateRequest.getName() + " Updated Successfully", 200));
+            return ResponseEntity.ok(new CommonResponse(true, "rating_updated_successful", ""));
         }
-        return ResponseEntity.ok(new MessageResponse("Rating Category ID is Invalid", 400));
+        return ResponseEntity.ok(new CommonResponse(false, "invalid_rating_id", ""));
     }
 
     @DeleteMapping("/delete/{id}")
@@ -101,9 +92,9 @@ public class RatingController {
         if (ratingCategoryOptional.isPresent()) {
             RatingCategory ratingCategory = ratingCategoryOptional.get();
             ratingCategoryRepository.delete(ratingCategory);
-            return ResponseEntity.ok(new MessageResponse(ratingCategory.getName() + " Deleted Successfully", 200));
+            return ResponseEntity.ok(new CommonResponse(true, "rating_deleted_successful", ""));
         }
-        return ResponseEntity.ok(new MessageResponse("Rating Category ID is Invalid", 400));
+        return ResponseEntity.ok(new CommonResponse(false, "invalid_rating_id", ""));
     }
 }
 

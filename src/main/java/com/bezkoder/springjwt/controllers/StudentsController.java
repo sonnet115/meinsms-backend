@@ -6,6 +6,7 @@ import com.bezkoder.springjwt.models.User;
 import com.bezkoder.springjwt.payload.request.ClassesCreateRequest;
 import com.bezkoder.springjwt.payload.request.StudentAddToClassRequest;
 import com.bezkoder.springjwt.payload.request.StudentCreateRequest;
+import com.bezkoder.springjwt.payload.response.CommonResponse;
 import com.bezkoder.springjwt.payload.response.MessageResponse;
 import com.bezkoder.springjwt.payload.response.StudentCreateResponse;
 import com.bezkoder.springjwt.repository.ClassesRepository;
@@ -45,7 +46,7 @@ public class StudentsController {
         students.setName(studentCreateRequest.getName());
         students.setParent(user);
         studentsRepository.save(students);
-        return ResponseEntity.ok(new StudentCreateResponse("Student Created Successfully", students.getName(), students.getId()));
+        return ResponseEntity.ok(new CommonResponse(true, "student_created_successful", ""));
     }
 
     @PostMapping("/add-to-class")
@@ -59,10 +60,10 @@ public class StudentsController {
             classesSet.add(classes);
             students.setClasses(classesSet);
             studentsRepository.save(students);
-            return ResponseEntity.ok(new MessageResponse("Student is added to class successfully", 200));
+            return ResponseEntity.ok(new CommonResponse(true, "student_added_class_successful", ""));
         }
 
-        return ResponseEntity.ok(new MessageResponse("Student or Class is Invalid!", 400));
+        return ResponseEntity.ok(new CommonResponse(false, "invalid_class_or_student_id", ""));
     }
 
     @GetMapping("/get/class/{classId}")
@@ -73,12 +74,12 @@ public class StudentsController {
             Optional<List<Students>> studentsOptional = studentsRepository.findAllByClasses(classes);
             if (studentsOptional.isPresent()) {
                 List<Students> studentsList = studentsOptional.get();
-                return ResponseEntity.ok(studentsList);
+                return ResponseEntity.ok(new CommonResponse(true, "", studentsList));
             } else {
-                return ResponseEntity.ok(new MessageResponse("No Student found in that class", 404));
+                return ResponseEntity.ok(new CommonResponse(false, "no_student_for_class", ""));
             }
         } else {
-            return ResponseEntity.ok(new MessageResponse("Invalid Class ID", 400));
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_class_id", ""));
         }
     }
 
@@ -90,38 +91,13 @@ public class StudentsController {
             Optional<List<Students>> studentsOptional = studentsRepository.findAllByParent(user);
             if (studentsOptional.isPresent()) {
                 List<Students> studentsList = studentsOptional.get();
-                return ResponseEntity.ok(studentsList);
+                return ResponseEntity.ok(new CommonResponse(true, "", studentsList));
             } else {
-                return ResponseEntity.ok(new MessageResponse("No Student found for that Parent", 404));
+                return ResponseEntity.ok(new CommonResponse(false, "no_student_for_parent", ""));
             }
         } else {
-            return ResponseEntity.ok(new MessageResponse("Invalid Parent ID", 400));
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_parent_id", ""));
         }
-    }
-
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ClassesCreateRequest classesCreateRequest) {
-
-        Optional<Classes> classesOptional = classesRepository.findById(id);
-
-        if (classesOptional.isPresent()) {
-            Classes classes = classesOptional.get();
-            classes.setClassName(classesCreateRequest.getName());
-            classesRepository.save(classes);
-            return ResponseEntity.ok("Class Updated Successfully");
-        }
-        return ResponseEntity.ok("No Class Found");
-    }
-
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        Optional<Classes> classesOptional = classesRepository.findById(id);
-        if (classesOptional.isPresent()) {
-            Classes classes = classesOptional.get();
-            classesRepository.delete(classes);
-            return ResponseEntity.ok("Class Deleted Successfully");
-        }
-        return ResponseEntity.ok("No Class Found");
     }
 }
 

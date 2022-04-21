@@ -1,9 +1,6 @@
 package com.bezkoder.springjwt.controllers;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -11,12 +8,16 @@ import javax.validation.Valid;
 import com.bezkoder.springjwt.payload.response.CommonResponse;
 import com.bezkoder.springjwt.payload.response.LoginResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import com.bezkoder.springjwt.models.ERole;
@@ -61,7 +62,7 @@ public class AuthController {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
+                .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(
@@ -78,7 +79,7 @@ public class AuthController {
             if (userRepository.existsByUsername(signUpRequest.getUsername())) {
                 return ResponseEntity
                         .badRequest()
-                        .body(new CommonResponse(true, "username_taken", ""));
+                        .body(new CommonResponse(false, "username_taken", null));
             }
 
             User user = new User();
@@ -116,7 +117,7 @@ public class AuthController {
                             roles.add(teacherRole);
                             break;
 
-                        case "parent":
+                        default:
                             Role parentRole = roleRepository.findByName(ERole.ROLE_PARENT)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                             roles.add(parentRole);
@@ -128,9 +129,9 @@ public class AuthController {
             user.setRoles(roles);
             userRepository.save(user);
 
-            return ResponseEntity.ok(new CommonResponse(true, "regis_successful", ""));
+            return ResponseEntity.ok(new CommonResponse(true, "regis_successful", null));
         } catch (Exception e) {
-            return ResponseEntity.ok(new CommonResponse(false, "regis_unsuccessful", ""));
+            return ResponseEntity.ok(new CommonResponse(false, "regis_unsuccessful", e.getMessage()));
         }
     }
 
@@ -139,4 +140,16 @@ public class AuthController {
         return ResponseEntity.ok(userRepository.getAllCustomers());
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        List<String> errors = new ArrayList<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.add(fieldName + " " + errorMessage);
+        });
+        return ResponseEntity.ok(new CommonResponse(false, "bad_request", null, errors));
+    }
 }

@@ -60,7 +60,7 @@ public class ClassesController {
             classes.setClassCode(String.valueOf(classCode));
             classesRepository.save(classes);
 
-            return ResponseEntity.ok(new CommonResponse(true, "class_create_successful", classes));
+            return ResponseEntity.ok(new CommonResponse(true, "class_create_successful", user.getClasses()));
         } catch (Exception e) {
             return ResponseEntity.ok(new CommonResponse(false, "class_create_failed", ""));
         }
@@ -90,12 +90,15 @@ public class ClassesController {
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody ClassesCreateRequest classesCreateRequest) {
 
         Optional<Classes> classesOptional = classesRepository.findById(id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        User user = userRepository.getById(userDetails.getId());
 
         if (classesOptional.isPresent()) {
             Classes classes = classesOptional.get();
             classes.setClassName(classesCreateRequest.getName());
             classesRepository.save(classes);
-            return ResponseEntity.ok(new CommonResponse(true, "class_updated_success", classes));
+            return ResponseEntity.ok(new CommonResponse(true, "class_updated_success", user.getClasses()));
         }
         return ResponseEntity.ok(new CommonResponse(false, "class_updated_failed", ""));
     }
@@ -106,9 +109,14 @@ public class ClassesController {
         if (classesOptional.isPresent()) {
             Classes classes = classesOptional.get();
             classesRepository.delete(classes);
-            return ResponseEntity.ok(new CommonResponse(true, "class_deleted_success", classes));
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+            User user = userRepository.getById(userDetails.getId());
+
+            return ResponseEntity.ok(new CommonResponse(true, "class_deleted_success", user.getClasses()));
         }
-        return ResponseEntity.ok(new CommonResponse(true, "class_deleted_failed", ""));
+        return ResponseEntity.ok(new CommonResponse(false, "class_deleted_failed", ""));
     }
 
     @GetMapping("/get/student/{studentId}")

@@ -27,7 +27,6 @@ public class Classes {
     @JoinColumn(name = "t_id", nullable = false)
     User teacher;
 
-    @JsonIgnore
     @ManyToMany(mappedBy = "classes")
     private Set<Students> students;
 }

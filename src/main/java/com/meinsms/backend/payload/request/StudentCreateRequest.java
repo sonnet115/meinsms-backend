@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class StudentCreateRequest {
     private String name;
+    private String gender;
 }

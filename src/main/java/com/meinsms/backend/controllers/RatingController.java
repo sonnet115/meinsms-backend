@@ -41,7 +41,12 @@ public class RatingController {
         Optional<Students> studentsOptional = studentsRepository.findById(ratingCreateRequest.getSid());
         Optional<Classes> classesOptional = classesRepository.findById(ratingCreateRequest.getCid());
         Optional<RatingCategory> ratingCategoryOptional = ratingCategoryRepository.findById(ratingCreateRequest.getRcid());
+
         if (studentsOptional.isPresent() && classesOptional.isPresent() && ratingCategoryOptional.isPresent()) {
+            Rating duplicateRating = ratingRepository.findAllByStudentsAndClassesAndRatingCategory(studentsOptional.get(), classesOptional.get(), ratingCategoryOptional.get());
+            if (duplicateRating != null) {
+                ratingRepository.delete(duplicateRating);
+            }
             Rating rating = new Rating();
             rating.setNegative(ratingCreateRequest.getNegative());
             rating.setPositive(ratingCreateRequest.getPositive());
@@ -49,9 +54,10 @@ public class RatingController {
             rating.setRatingCategory(ratingCategoryOptional.get());
             rating.setClasses(classesOptional.get());
             ratingRepository.save(rating);
-            return ResponseEntity.ok(new CommonResponse(true, "rating_submitted_successful", rating));
+            List<Rating> ratingList = ratingRepository.findAllByStudentsAndClasses(studentsOptional.get(), classesOptional.get());
+            return ResponseEntity.ok(new CommonResponse(true, "rating_submitted_successful", ratingList));
         }
-        return ResponseEntity.ok(new CommonResponse(false, "rating_submitted_failed", ""));
+        return ResponseEntity.ok(new CommonResponse(false, "rating_submitted_failed", null));
     }
 
     @GetMapping("/get/student/{studentId}/classes/{classesId}")
@@ -61,9 +67,8 @@ public class RatingController {
         if (studentsOptional.isPresent() && classesOptional.isPresent()) {
             Students students = studentsOptional.get();
             Classes classes = classesOptional.get();
-            Optional<List<Rating>> ratingListOptional = ratingRepository.findAllByStudentsAndClasses(students, classes);
-            if (ratingListOptional.isPresent()) {
-                List<Rating> ratingList = ratingListOptional.get();
+            List<Rating> ratingList = ratingRepository.findAllByStudentsAndClasses(students, classes);
+            if (!ratingList.isEmpty()) {
                 return ResponseEntity.ok(new CommonResponse(true, "", ratingList));
             } else {
                 return ResponseEntity.ok(new CommonResponse(false, "no_rating_found_for_student", ""));

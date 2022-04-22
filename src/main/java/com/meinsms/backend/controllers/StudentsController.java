@@ -42,11 +42,12 @@ public class StudentsController {
         if (user.getRoles().contains(ERole.ROLE_PARENT)) {
             Students students = new Students();
             students.setName(studentCreateRequest.getName());
+            students.setGender(studentCreateRequest.getGender().toUpperCase());
             students.setParent(user);
             studentsRepository.save(students);
             return ResponseEntity.ok(new CommonResponse(true, "student_created_successful", user.getStudents()));
         } else {
-            return ResponseEntity.ok(new CommonResponse(false, "need_tobe_parent", user.getStudents()));
+            return ResponseEntity.ok(new CommonResponse(false, "need_tobe_parent", null));
         }
     }
 
@@ -67,7 +68,7 @@ public class StudentsController {
         return ResponseEntity.ok(new CommonResponse(false, "invalid_class_or_student_id", null));
     }
 
-    @GetMapping("/get/class/{classId}")
+    @GetMapping("/get/classes/{classId}")
     public ResponseEntity<?> getByClass(@PathVariable Long classId) {
         Optional<Classes> classesOptional = classesRepository.findById(classId);
         if (classesOptional.isPresent()) {

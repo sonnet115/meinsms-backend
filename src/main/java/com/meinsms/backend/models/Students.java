@@ -19,6 +19,8 @@ public class Students {
 
     private String name;
 
+    private String gender;
+
     @Column(columnDefinition = "TEXT")
     private String avatar;
 
@@ -34,6 +36,7 @@ public class Students {
     @JoinColumn(name = "parent_id", nullable = false)
     User parent;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "students")
     List<Rating> ratingList;
 }

@@ -1,9 +1,6 @@
 package com.meinsms.backend.controllers;
 
-import com.meinsms.backend.models.Classes;
-import com.meinsms.backend.models.ERole;
-import com.meinsms.backend.models.Students;
-import com.meinsms.backend.models.User;
+import com.meinsms.backend.models.*;
 import com.meinsms.backend.payload.request.StudentAddToClassRequest;
 import com.meinsms.backend.payload.request.StudentCreateRequest;
 import com.meinsms.backend.payload.response.CommonResponse;
@@ -14,10 +11,12 @@ import com.meinsms.backend.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -39,15 +38,42 @@ public class StudentsController {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         User user = userRepository.getById(userDetails.getId());
 
-        if (user.getRoles().contains(ERole.ROLE_PARENT)) {
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        if (roles.get(0).equals(ERole.ROLE_PARENT.name())) {
             Students students = new Students();
             students.setName(studentCreateRequest.getName());
             students.setGender(studentCreateRequest.getGender().toUpperCase());
+            students.setAvatar(studentCreateRequest.getAvatar()
+            );
             students.setParent(user);
             studentsRepository.save(students);
-            return ResponseEntity.ok(new CommonResponse(true, "student_created_successful", user.getStudents()));
+            return ResponseEntity.ok(new CommonResponse(true, "child_create_successful", user.getStudents()));
         } else {
             return ResponseEntity.ok(new CommonResponse(false, "need_tobe_parent", null));
+        }
+    }
+
+    @PutMapping("/update/{sid}")
+    public ResponseEntity<?> update(@PathVariable long sid, @RequestBody StudentCreateRequest studentCreateRequest) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        User user = userRepository.getById(userDetails.getId());
+
+        Optional<Students> studentsOptional = studentsRepository.findById(sid);
+        if (studentsOptional.isPresent()) {
+            Students students = studentsOptional.get();
+            students.setName(studentCreateRequest.getName());
+            students.setGender(studentCreateRequest.getGender().toUpperCase());
+            students.setAvatar(studentCreateRequest.getAvatar()
+            );
+            students.setParent(user);
+            studentsRepository.save(students);
+            return ResponseEntity.ok(new CommonResponse(true, "child_updated_successful", user.getStudents()));
+        } else {
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_child_id", null));
         }
     }
 
@@ -62,10 +88,10 @@ public class StudentsController {
             classesSet.add(classes);
             students.setClasses(classesSet);
             studentsRepository.save(students);
-            return ResponseEntity.ok(new CommonResponse(true, "student_added_class_successful", null));
+            return ResponseEntity.ok(new CommonResponse(true, "child_added_class_successful", null));
         }
 
-        return ResponseEntity.ok(new CommonResponse(false, "invalid_class_or_student_id", null));
+        return ResponseEntity.ok(new CommonResponse(false, "invalid_class_or_child_id", null));
     }
 
     @GetMapping("/get/classes/{classId}")
@@ -96,7 +122,7 @@ public class StudentsController {
             List<Students> studentsList = studentsOptional.get();
             return ResponseEntity.ok(new CommonResponse(true, "", studentsList));
         } else {
-            return ResponseEntity.ok(new CommonResponse(false, "no_student_for_parent", null));
+            return ResponseEntity.ok(new CommonResponse(false, "no_child_for_parent", null));
         }
     }
 }

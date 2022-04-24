@@ -133,11 +133,6 @@ public class AuthController {
         }
     }
 
-    @GetMapping("get/all/customers")
-    public ResponseEntity<?> getAllCustomers() {
-        return ResponseEntity.ok(userRepository.getAllCustomers());
-    }
-
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity handleValidationExceptions(

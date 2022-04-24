@@ -21,8 +21,8 @@ public class Students {
 
     private String gender;
 
-    @Column(columnDefinition = "TEXT")
-    private String avatar;
+    @Column(columnDefinition="bytea")
+    private byte[] avatar;
 
     @JsonIgnore
     @ManyToMany

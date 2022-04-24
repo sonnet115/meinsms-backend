@@ -6,4 +6,5 @@ import lombok.Data;
 public class StudentCreateRequest {
     private String name;
     private String gender;
+    private byte[] avatar;
 }

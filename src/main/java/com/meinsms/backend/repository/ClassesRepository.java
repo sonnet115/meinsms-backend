@@ -13,7 +13,9 @@ import java.util.Optional;
 public interface ClassesRepository extends JpaRepository<Classes, Long> {
     List<Classes> findAllByTeacher(User teacher);
 
-    Optional<Classes>findAllByClassCode(String classCode);
+    Optional<Classes> findAllByClassCode(String classCode);
 
     Optional<List<Classes>> findAllByStudents(Students students);
+
+    Classes findAllByClassCodeAndStudents(String classCode, Students students);
 }

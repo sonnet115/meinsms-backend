@@ -3,6 +3,7 @@ package com.meinsms.backend.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import java.util.List;
@@ -20,6 +21,8 @@ public class Students {
     private String name;
 
     private String gender;
+
+    private boolean sick;
 
     @Column(columnDefinition="bytea")
     private byte[] avatar;

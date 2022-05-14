@@ -12,5 +12,8 @@ import java.util.Optional;
 @Repository
 public interface StudentsRepository extends JpaRepository<Students, Long> {
     Optional<List<Students>> findAllByClasses(Classes classes);
+
     Optional<List<Students>> findAllByParent(User user);
+
+    Optional<List<Students>> findAllByClassesAndSickEquals(Classes classes, boolean sick);
 }

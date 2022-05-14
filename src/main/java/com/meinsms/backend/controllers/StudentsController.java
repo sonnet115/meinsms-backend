@@ -46,8 +46,8 @@ public class StudentsController {
             Students students = new Students();
             students.setName(studentCreateRequest.getName());
             students.setGender(studentCreateRequest.getGender().toUpperCase());
-            students.setAvatar(studentCreateRequest.getAvatar()
-            );
+            students.setAvatar(studentCreateRequest.getAvatar());
+            students.setSick(false);
             students.setParent(user);
             studentsRepository.save(students);
             return ResponseEntity.ok(new CommonResponse(true, "child_create_successful", user.getStudents()));
@@ -81,7 +81,12 @@ public class StudentsController {
     public ResponseEntity<?> addStudentToClass(@RequestBody StudentAddToClassRequest studentAddToClassRequest) {
         Optional<Students> studentsOptional = studentsRepository.findById(studentAddToClassRequest.getStudentId());
         Optional<Classes> classesOptional = classesRepository.findAllByClassCode(studentAddToClassRequest.getClassCode());
+
         if (studentsOptional.isPresent() && classesOptional.isPresent()) {
+            Classes classesExist = classesRepository.findAllByClassCodeAndStudents(studentAddToClassRequest.getClassCode(), studentsOptional.get());
+            if (classesExist != null) {
+                return ResponseEntity.ok(new CommonResponse(false, "child_already_added", null));
+            }
             Students students = studentsOptional.get();
             Classes classes = classesOptional.get();
             Set<Classes> classesSet = students.getClasses();
@@ -123,6 +128,40 @@ public class StudentsController {
             return ResponseEntity.ok(new CommonResponse(true, "", studentsList));
         } else {
             return ResponseEntity.ok(new CommonResponse(false, "no_child_for_parent", null));
+        }
+    }
+
+    @GetMapping("/get/sick/{classId}")
+    public ResponseEntity<?> getSickStudents(@PathVariable Long classId) {
+        Optional<Classes> classesOptional = classesRepository.findById(classId);
+        if (classesOptional.isPresent()) {
+            Classes classes = classesOptional.get();
+            Optional<List<Students>> studentsOptional = studentsRepository.findAllByClassesAndSickEquals(classes, true);
+            if (!studentsOptional.get().isEmpty()) {
+                List<Students> studentsList = studentsOptional.get();
+                return ResponseEntity.ok(new CommonResponse(true, "", studentsList));
+            } else {
+                return ResponseEntity.ok(new CommonResponse(false, "no_student_sick", null));
+            }
+        } else {
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_class_id", null));
+        }
+    }
+
+    @PutMapping("/mark/sick/{sid}/{sick}")
+    public ResponseEntity<?> markSick(@PathVariable long sid, @PathVariable boolean sick) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+        User user = userRepository.getById(userDetails.getId());
+
+        Optional<Students> studentsOptional = studentsRepository.findById(sid);
+        if (studentsOptional.isPresent()) {
+            Students students = studentsOptional.get();
+            students.setSick(sick);
+            studentsRepository.save(students);
+            return ResponseEntity.ok(new CommonResponse(true, "child_updated_successful", user.getStudents()));
+        } else {
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_child_id", null));
         }
     }
 }

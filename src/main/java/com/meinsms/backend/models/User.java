@@ -63,6 +63,14 @@ public class User {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     List<Students> students;
 
+    @OneToMany(mappedBy = "parent")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    List<Appointments> appointments;
+
+    @OneToMany(mappedBy = "teacher")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    List<Appointments> teacherAppointments;
+
     public User() {
     }
 }

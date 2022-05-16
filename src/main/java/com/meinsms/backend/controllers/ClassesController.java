@@ -130,5 +130,21 @@ public class ClassesController {
             return ResponseEntity.ok(new CommonResponse(false, "invalid_student_id", ""));
         }
     }
+
+    @GetMapping("/get/teacher/{classId}")
+    public ResponseEntity<?> getTeacherByStudent(@PathVariable Long classId) {
+        Optional<Classes> classesOptional = classesRepository.findById(classId);
+        if (classesOptional.isPresent()) {
+            Classes classes = classesOptional.get();
+            User user = userRepository.findAllByClasses(classes);
+            if (user != null) {
+                return ResponseEntity.ok(new CommonResponse(true, "", user));
+            } else {
+                return ResponseEntity.ok(new CommonResponse(false, "no_teacher_found_for_class", ""));
+            }
+        } else {
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_class_id", ""));
+        }
+    }
 }
 

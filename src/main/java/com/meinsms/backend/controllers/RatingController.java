@@ -71,10 +71,10 @@ public class RatingController {
             if (!ratingList.isEmpty()) {
                 return ResponseEntity.ok(new CommonResponse(true, "", ratingList));
             } else {
-                return ResponseEntity.ok(new CommonResponse(false, "no_rating_found_for_student", ""));
+                return ResponseEntity.ok(new CommonResponse(false, "no_rating_found_for_student", null));
             }
         } else {
-            return ResponseEntity.ok(new CommonResponse(false, "invalid_student_id", ""));
+            return ResponseEntity.ok(new CommonResponse(false, "invalid_student_id", null));
         }
     }
 

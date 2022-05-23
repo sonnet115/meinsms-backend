@@ -52,7 +52,7 @@ public class AppointmentsController {
             appointments.setStudents(studentsOptional.get());
             appointments.setStartTime(appointmentCreateRequest.getStart());
             appointments.setEndTime(appointmentCreateRequest.getEnd());
-            appointments.setStatus(appointmentCreateRequest.getStatus());
+            appointments.setStatus("PENDING");
 
             appointmentRepository.save(appointments);
 
@@ -91,7 +91,6 @@ public class AppointmentsController {
             UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
             User user = userRepository.getById(userDetails.getId());
 
-            System.err.println(appointmentCreateRequest.getStatus());
             Optional<Appointments> appointments = appointmentRepository.findById(appt_id);
             appointments.get().setStatus(appointmentCreateRequest.getStatus());
             appointmentRepository.save(appointments.get());

@@ -22,6 +22,7 @@ public class Students {
 
     private String gender;
 
+    @Nullable
     private boolean sick;
 
     @Column(columnDefinition="bytea")

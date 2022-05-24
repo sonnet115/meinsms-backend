@@ -1,6 +1,7 @@
 package com.meinsms.backend.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,8 +28,10 @@ public class Classes {
     User teacher;
 
     @OneToMany(mappedBy = "classes")
+    @JsonIgnoreProperties("filePath")
     List<Activities> activities;
 
     @ManyToMany(mappedBy = "classes")
+    @JsonIgnoreProperties("avatar")
     private Set<Students> students;
 }

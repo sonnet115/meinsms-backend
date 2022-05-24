@@ -54,7 +54,6 @@ public class ActivityController {
     public ResponseEntity<?> getByClass(@RequestParam(value = "from", required = false) String from,
                                           @RequestParam(value = "to", required = false) String to,
                                           @PathVariable Long id) {
-
         List<Activities> activitiesList = activityRepository.findAllByClassesAndActivityDateGreaterThanEqualAndActivityDateLessThanEqual(classesRepository.findById(id).get(), Long.parseLong(from), Long.parseLong(to));
         return ResponseEntity.ok(new CommonResponse(true, "", activitiesList));
     }

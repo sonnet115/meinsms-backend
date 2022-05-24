@@ -10,8 +10,13 @@ import com.meinsms.backend.payload.response.CommonResponse;
 import com.meinsms.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +40,8 @@ public class RatingController {
     @Autowired
     RatingRepository ratingRepository;
 
+    @Autowired
+    private JavaMailSender mailSender;
 
     @PostMapping("/create")
     public ResponseEntity<?> rateStudents(@RequestBody RatingCreateRequest ratingCreateRequest) {
@@ -99,6 +106,30 @@ public class RatingController {
             return ResponseEntity.ok(new CommonResponse(true, "rating_deleted_successful", ""));
         }
         return ResponseEntity.ok(new CommonResponse(false, "invalid_rating_id", ""));
+    }
+
+    @GetMapping("/sendmail")
+    public void send(String name, String className) throws UnsupportedEncodingException, MessagingException {
+
+        String fromAddress = "noreply.meinsms@gmail.com";
+        String senderName = "MeinSMS";
+        String subject = "Sick Child";
+        String content = "Dear Sir, <br>" +
+                "Student \"[[name]]\" from \"[[class_name]]\" is Sick."
+                + "Thank you,<br>"
+                + "MeinSMS";
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom(fromAddress, senderName);
+        helper.setTo("sonnet36biz@gmail.com");
+        helper.setSubject(subject);
+
+        content = content.replace("[[name]]", name);
+        content = content.replace("[[class_name]]", className);
+        helper.setText(content, true);
+        mailSender.send(message);
     }
 }
 

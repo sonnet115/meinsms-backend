@@ -10,11 +10,16 @@ import com.meinsms.backend.repository.UserRepository;
 import com.meinsms.backend.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,6 +36,9 @@ public class StudentsController {
 
     @Autowired
     StudentsRepository studentsRepository;
+
+    @Autowired
+    private JavaMailSender mailSender;
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody StudentCreateRequest studentCreateRequest) {
@@ -149,7 +157,7 @@ public class StudentsController {
     }
 
     @PutMapping("/mark/sick/{sid}/{sick}")
-    public ResponseEntity<?> markSick(@PathVariable long sid, @PathVariable boolean sick) {
+    public ResponseEntity<?> markSick(@PathVariable long sid, @PathVariable boolean sick) throws UnsupportedEncodingException, MessagingException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         User user = userRepository.getById(userDetails.getId());
@@ -159,10 +167,34 @@ public class StudentsController {
             Students students = studentsOptional.get();
             students.setSick(sick);
             studentsRepository.save(students);
+            if (sick) {
+                this.send(students.getName());
+            }
             return ResponseEntity.ok(new CommonResponse(true, "child_updated_successful", user.getStudents()));
         } else {
             return ResponseEntity.ok(new CommonResponse(false, "invalid_child_id", null));
         }
+    }
+
+    public void send(String name) throws UnsupportedEncodingException, MessagingException {
+        String fromAddress = "noreply.meinsms@gmail.com";
+        String senderName = "MeinSMS";
+        String subject = "Sick Child";
+        String content = "Dear Sir, <br>"
+                + "This is to inform you that Student named \"[[name]]\" is Sick.<br>"
+                + "Thank you,<br>"
+                + "MeinSMS";
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom(fromAddress, senderName);
+        helper.setTo("sonnet36biz@gmail.com");
+        helper.setSubject(subject);
+
+        content = content.replace("[[name]]", name);
+        helper.setText(content, true);
+        mailSender.send(message);
     }
 }
 

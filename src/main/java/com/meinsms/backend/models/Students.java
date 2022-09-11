@@ -43,4 +43,9 @@ public class Students {
     @JsonIgnore
     @OneToMany(mappedBy = "students")
     List<Rating> ratingList;
+
+    public void removeClass(Classes c) {
+        classes.remove(c);
+        c.getStudents().remove(this);
+    }
 }

@@ -37,8 +37,6 @@ public class StudentsController {
     @Autowired
     StudentsRepository studentsRepository;
 
-    @Autowired
-    private JavaMailSender mailSender;
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody StudentCreateRequest studentCreateRequest) {
@@ -177,24 +175,7 @@ public class StudentsController {
     }
 
     public void send(String name) throws UnsupportedEncodingException, MessagingException {
-        String fromAddress = "noreply.meinsms@gmail.com";
-        String senderName = "MeinSMS";
-        String subject = "Sick Child";
-        String content = "Dear Sir, <br>"
-                + "This is to inform you that Student named \"[[name]]\" is Sick.<br>"
-                + "Thank you,<br>"
-                + "MeinSMS";
 
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
-
-        helper.setFrom(fromAddress, senderName);
-        helper.setTo("sonnet36biz@gmail.com");
-        helper.setSubject(subject);
-
-        content = content.replace("[[name]]", name);
-        helper.setText(content, true);
-        mailSender.send(message);
     }
 }
 

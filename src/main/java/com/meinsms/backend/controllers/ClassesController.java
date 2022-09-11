@@ -37,7 +37,7 @@ public class ClassesController {
     public ResponseEntity<?> create(@RequestBody ClassesCreateRequest classesCreateRequest) {
         try {
             int classCode = 0;
-            for (; ; ) {
+            for (; ;) {
                 classCode = rand.nextInt(100000);
                 Optional<Classes> classExist = classesRepository.findAllByClassCode(String.valueOf(classCode));
                 if (classExist.isPresent()) {
@@ -144,6 +144,21 @@ public class ClassesController {
             }
         } else {
             return ResponseEntity.ok(new CommonResponse(false, "invalid_class_id", ""));
+        }
+    }
+
+    @DeleteMapping("del/class/{classId}/student/{sid}")
+    public ResponseEntity<?> deleteStudentFromClass(@PathVariable Long classId, @PathVariable Long sid) {
+        Optional<Students> studentsOptional = studentsRepository.findById(sid);
+        Optional<Classes> classesOptional = classesRepository.findById(classId);
+
+        if (studentsOptional.isPresent()) {
+            Students students = studentsOptional.get();
+            students.removeClass(classesOptional.get());
+            studentsRepository.save(students);
+            return ResponseEntity.ok(new CommonResponse(false, "Deleted Successfully", ""));
+        } else {
+            return ResponseEntity.ok(new CommonResponse(false, "Deleted Failed", ""));
         }
     }
 }
